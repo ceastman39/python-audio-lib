@@ -3,3 +3,6 @@
 
 #Test scripts
 test_scripts/*
+
+#Shell scripts
+*.sh

@@ -65,12 +65,15 @@ Parameters:<br>
 &nbsp;<br>
 Note:&nbsp;Types&nbsp;are&nbsp;enforced&nbsp;in&nbsp;the&nbsp;base&nbsp;class&nbsp;<a href="EffectPipe.html#EffectPipe">EffectPipe</a></tt></dd></dl>
 
-<dl><dt><a name="DelayEffect-get"><strong>get</strong></a>(self, data)</dt><dd><tt>Returns&nbsp;the&nbsp;data&nbsp;from&nbsp;the&nbsp;queue&nbsp;in&nbsp;the&nbsp;form&nbsp;of&nbsp;a&nbsp;numpy&nbsp;array.<br>
+<dl><dt><a name="DelayEffect-get"><strong>get</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;chunk&nbsp;of&nbsp;data&nbsp;on&nbsp;the&nbsp;queue.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;A&nbsp;numpy&nbsp;array&nbsp;containing&nbsp;one&nbsp;chunk&nbsp;of&nbsp;variable-size&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="DelayEffect-push"><strong>push</strong></a>(self, data)</dt><dd><tt>Public&nbsp;function&nbsp;to&nbsp;push&nbsp;data&nbsp;to&nbsp;the&nbsp;pipeline.<br>
 &nbsp;<br>
 Parameters:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;data:&nbsp;1-D&nbsp;numpy&nbsp;array&nbsp;of&nbsp;audio&nbsp;data&nbsp;to&nbsp;be&nbsp;pushed.</tt></dd></dl>
-
-<dl><dt><a name="DelayEffect-push"><strong>push</strong></a>(self, data)</dt><dd><tt>Public&nbsp;function&nbsp;to&nbsp;push&nbsp;data&nbsp;to&nbsp;the&nbsp;pipeline.</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;data:&nbsp;A&nbsp;numpy&nbsp;array&nbsp;that&nbsp;represents&nbsp;one&nbsp;chunk&nbsp;of&nbsp;audio&nbsp;data.</tt></dd></dl>
 
 <hr>
 Readonly properties inherited from <a href="EffectPipe.html#EffectPipe">EffectPipe.EffectPipe</a>:<br>

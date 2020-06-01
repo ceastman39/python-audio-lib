@@ -34,19 +34,23 @@ class DelayEffect(EffectPipe):
         Public function to push data to the pipeline.
 
         '''
+        if(data.dtype is not self.type):
+            eString = f"Given data needs to have the same type as the DelayEffect. Type needed: {self.type}, type given: {data.dtype}"
+            raise TypeError
+
         self.__queue.append(self.__add_effect(data))
         return
 
-    def get(self, data):
+    def get(self):
         '''
 
         Returns the data from the queue in the form of a numpy array.
 
-        Parameters:
-            data: 1-D numpy array of audio data to be pushed.
-
         '''
-        return self.__queue.popleft()
+        if(len(self.__queue) > 0):
+            return self.__queue.popleft()
+        else:
+            return None
 
     def __add_effect(self, data):
         '''
@@ -57,10 +61,9 @@ class DelayEffect(EffectPipe):
             data: numpy array containing audio data.
 
         '''
-        print(data.dtype, self.type)
-        if(data.dtype is not self.type):
-            eString = f"Given data needs to have the same type as the DelayEffect. Type needed: {self.type}, type given: {data.dtype}"
-            raise TypeError(eString)
+        effect_data = np.empty(shape=data.shape, dtype=self.type)
+        for i in range(data.shape[0]):
+            self.__delay_queue.append(data[i][0])
+            effect_data[i][0] = self.__delay_queue.popleft()
 
-        #TODO: Finish this!!!!
-        return au.add_samples(data)
+        return au.add_samples(data, effect_data)

@@ -1,6 +1,5 @@
 from EffectPipe import EffectPipe
 from collections import deque
-import numpy as np
 import AudioUtil as au
 
 class DelayEffect(EffectPipe):
@@ -19,14 +18,14 @@ class DelayEffect(EffectPipe):
             ch: Number of channels. Default: 2
             dtype: Numpy data type. Default: np.int16
                    [np.int16, np.int32, np.float32]
-            time: Delay in milliseconds.
+            time: Delay in milliseconds. Default: 500
 
         Note: Types are enforced in the base class EffectPipe
 
         '''
         super().__init__(rate, ch, dtype)
         self.__queue = deque()
-        self.__delay_queue = deque(np.zeros(time*(self.rate // 1000), dtype=self.type))
+        self.__delay_queues = [deque(np.zeros((time*(rate//1000)), dtype=self.type)) for i in range(ch)]
 
     def push(self, data):
         '''
@@ -63,7 +62,7 @@ class DelayEffect(EffectPipe):
         '''
         effect_data = np.empty(shape=data.shape, dtype=self.type)
         for i in range(data.shape[0]):
-            self.__delay_queue.append(data[i][0])
-            effect_data[i][0] = self.__delay_queue.popleft()
-
+            for j in range(self.channels):
+                self.__delay_queues[j].append(data[i][j])
+                effect_data[i][j] = self.__delay_queues[j].popleft()
         return au.add_samples(data, effect_data)

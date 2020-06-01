@@ -1,6 +1,8 @@
 import numpy as np
 '''
+
 Utility functions to be used when manipulating audio data.
+
 '''
 
 def add_samples(x, y):

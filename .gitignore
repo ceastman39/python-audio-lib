@@ -6,3 +6,6 @@ test_scripts/*
 
 #Shell scripts
 *.sh
+
+#Any audio test files
+*.wav

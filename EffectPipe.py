@@ -5,7 +5,7 @@ class EffectPipe:
 
         TODO: Write more documentation.
     '''
-    def __init__(self, rate = 44100, ch = 2, dtype = np.int16):
+    def __init__(self, rate = 44100, ch = 2, dtype = np.int16, blocksize = 1024, dgain = 0.7, wgain = 0.3):
         '''
 
         Constructor.
@@ -15,6 +15,8 @@ class EffectPipe:
             ch: Number of channels. Default: 2
             dtype: Numpy data type. Default: np.int16
                    [np.int16, np.int32, np.float32]
+           dgain: "Dry" gain ratio. Default: 0.7
+           dgain: "Wet" gain ratio. Default: 0.3
 
         '''
         self.__RATE = rate
@@ -23,6 +25,9 @@ class EffectPipe:
             raise TypeError(eString)
         self.__TYPE = np.dtype(dtype)
         self.__CHANNELS = ch
+        self.__BLOCKSIZE = blocksize
+        self.__DGAIN = dgain
+        self.__WGAIN = wgain
 
     def push(self, data):
         '''
@@ -72,4 +77,14 @@ class EffectPipe:
     def channels(self):
         '''Returns the number of channels being used for the audio data.'''
         return self.__CHANNELS
+
+    @property
+    def gain(self):
+        '''Returns a tuple containing both the dry and wet gain values. (Dry, Wet).'''
+        return (self.__DGAIN, self.__WGAIN)
+
+    @property
+    def blocksize(self):
+        '''Returns the size of the blocksize.'''
+        return self.__BLOCKSIZE
     ##endregion

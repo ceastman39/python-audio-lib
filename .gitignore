@@ -3,6 +3,7 @@
 
 #Test scripts
 test_scripts/*
+test*.py
 
 #Shell scripts
 *.sh

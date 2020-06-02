@@ -3,40 +3,38 @@ from collections import deque
 import numpy as np
 import AudioUtil as au
 
-class DelayEffect(EffectPipe):
+class CombFilter(EffectPipe):
     '''
-        Delay Effect.
+        A Comb Filter.
 
         TODO: Write more documentation.
     '''
-    def __init__(self, rate, ch, dtype, dgain = 0.7, wgain = 0.3, time=500):
+    def __init__(self, rate = 44100, ch = 2, dtype = np.int16, blocksize = 1024, dgain = 0.7, wgain = 0.7, time=100):
         '''
 
-        Constructor
+        Constructor.
 
         Parameters:
             rate: Sampling rate. Default: 44100
             ch: Number of channels. Default: 2
             dtype: Numpy data type. Default: np.int16
-                [np.int16, np.int32, np.float32]
-            wgain: Wet gain ratio. Default: 0.3
-            dgain: Dry gain ration. Default: 0.7
-            time: Delay in milliseconds. Default: 500
-
-        Note: Types in the constructor are enforced in the base class EffectPipe
+                   [np.int16, np.int32, np.float32]
+           dgain: "Dry" gain ratio. Default: 0.7
+           dgain: "Wet" gain ratio. Default: 0.3
 
         '''
-        super().__init__(rate, ch, dtype, dgain, wgain)
+        super().__init__(rate, ch, dtype, blocksize, dgain, wgain)
         self.__queue = deque()
         self.__delay_queues = [deque(np.zeros((time*(rate//1000)), dtype=self.type)) for i in range(ch)]
+        self.__last_sample = np.zeros(shape=(blocksize, ch), dtype=self.type)
 
     def push(self, data):
         '''
 
-        Public function to push data to the pipeline.
+        Does an operation on the data, and pushes it to the queue.
 
         Parameters:
-            data: A numpy array containing audio data.
+            data: Numpy array containing audio data.
 
         '''
         if(data.dtype is not self.type):
@@ -49,11 +47,7 @@ class DelayEffect(EffectPipe):
     def get(self):
         '''
 
-        Returns the data from the queue in the form of a numpy array.
-
-        Returns:
-            A numpy array containing audio data, if there is data in the queue.
-            None if no data is available.
+        Returns the data from the queue.
 
         '''
         if(len(self.__queue) > 0):
@@ -64,21 +58,17 @@ class DelayEffect(EffectPipe):
     def __add_effect(self, data):
         '''
 
-        The function that modifies the data as it's being pushed.
+        The internal function to be overridden that applies the effect to the
+        audio data passed.
 
         Parameters:
             data: numpy array containing audio data.
 
-        Returns:
-            A numpy array containing manipulated audio data.
-
         '''
         effect_data = np.empty(shape=data.shape, dtype=self.type)
-        for i in range(data.shape[0]):
+        for i in range(self.blocksize):
             for j in range(self.channels):
-                self.__delay_queues[j].append(data[i][j])
                 effect_data[i][j] = self.__delay_queues[j].popleft()
-        effect_data = np.multiply(effect_data, self.gain[1]).astype(self.type)
-        data = np.multiply(data, self.gain[0]).astype(self.type)
+                self.__delay_queues[j].append(au.add_samples_gain(data[i][j], effect_data[i][j], self.gain[1]))
 
-        return au.add_samples(data, effect_data)
+        return au.add_samples_gain(data, effect_data, 0.7)

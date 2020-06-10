@@ -1,7 +1,9 @@
 from EffectPipe import EffectPipe
 from collections import deque
 import numpy as np
-import AudioUtil as au
+
+DRY_GAIN = 0
+WET_GAIN = 1
 
 class DelayEffect(EffectPipe):
     '''
@@ -9,7 +11,7 @@ class DelayEffect(EffectPipe):
 
         TODO: Write more documentation.
     '''
-    def __init__(self, rate, ch, dtype, dgain = 0.7, wgain = 0.3, time=500):
+    def __init__(self, rate, ch, dtype, dgain = 0.7, wgain = 0.5, time=250):
         '''
 
         Constructor
@@ -19,16 +21,18 @@ class DelayEffect(EffectPipe):
             ch: Number of channels. Default: 2
             dtype: Numpy data type. Default: np.int16
                 [np.int16, np.int32, np.float32]
-            wgain: Wet gain ratio. Default: 0.3
+            wgain: Wet gain ratio. Default: 0.5
             dgain: Dry gain ration. Default: 0.7
             time: Delay in milliseconds. Default: 500
 
-        Note: Types in the constructor are enforced in the base class EffectPipe
+        Note: Types for the default constructor arguments are enforced
+              in the base class EffectPipe
 
         '''
         super().__init__(rate, ch, dtype, dgain, wgain)
+        self.__ms = rate // 1000
+        self.__delay = np.zeros(shape=(time*self.__ms,ch), dtype=(self.type))
         self.__queue = deque()
-        self.__delay_queues = [deque(np.zeros((time*(rate//1000)), dtype=self.type)) for i in range(ch)]
 
     def push(self, data):
         '''
@@ -73,12 +77,10 @@ class DelayEffect(EffectPipe):
             A numpy array containing manipulated audio data.
 
         '''
-        effect_data = np.empty(shape=data.shape, dtype=self.type)
-        for i in range(data.shape[0]):
-            for j in range(self.channels):
-                self.__delay_queues[j].append(data[i][j])
-                effect_data[i][j] = self.__delay_queues[j].popleft()
-        effect_data = np.multiply(effect_data, self.gain[1]).astype(self.type)
-        data = np.multiply(data, self.gain[0]).astype(self.type)
-
-        return au.add_samples(data, effect_data)
+        data_size = data.shape[0]
+        dry_data = (data * self.gain[DRY_GAIN]).astype(self.type)
+        if(self.__delay.shape[0] < data_size):
+            self.__delay = np.append(self.__delay, in_data[:(data_size - self.__delay.shape[0])], axis=0)
+        wet_data = (self.__delay[:data_size] * self.gain[WET_GAIN]).astype(self.type)
+        self.__delay = np.append(self.__delay[data_size:], data, axis=0)
+        return np.add(dry_data, wet_data)

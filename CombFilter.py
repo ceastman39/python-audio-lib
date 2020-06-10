@@ -1,7 +1,9 @@
 from EffectPipe import EffectPipe
 from collections import deque
 import numpy as np
-import AudioUtil as au
+
+DRY_GAIN = 0
+WET_GAIN = 1
 
 class CombFilter(EffectPipe):
     '''
@@ -9,7 +11,7 @@ class CombFilter(EffectPipe):
 
         TODO: Write more documentation.
     '''
-    def __init__(self, rate = 44100, ch = 2, dtype = np.int16, blocksize = 1024, dgain = 0.7, wgain = 0.7, time=100):
+    def __init__(self, rate, ch, dtype, dgain = 0.7, wgain = 0.7, decay = 0.9, time=100):
         '''
 
         Constructor.
@@ -20,13 +22,14 @@ class CombFilter(EffectPipe):
             dtype: Numpy data type. Default: np.int16
                    [np.int16, np.int32, np.float32]
            dgain: "Dry" gain ratio. Default: 0.7
-           dgain: "Wet" gain ratio. Default: 0.3
+           dgain: "Wet" gain ratio. Default: 0.7
 
         '''
-        super().__init__(rate, ch, dtype, blocksize, dgain, wgain)
+        super().__init__(rate, ch, dtype, dgain, wgain)
+        self.__ms = rate // 1000
+        self.__delay = np.zeros(shape=(time*self.__ms,ch), dtype=(self.type))
         self.__queue = deque()
-        self.__delay_queues = [deque(np.zeros((time*(rate//1000)), dtype=self.type)) for i in range(ch)]
-        self.__last_sample = np.zeros(shape=(blocksize, ch), dtype=self.type)
+        self.__decay = decay
 
     def push(self, data):
         '''
@@ -65,10 +68,11 @@ class CombFilter(EffectPipe):
             data: numpy array containing audio data.
 
         '''
-        effect_data = np.empty(shape=data.shape, dtype=self.type)
-        for i in range(self.blocksize):
-            for j in range(self.channels):
-                effect_data[i][j] = self.__delay_queues[j].popleft()
-                self.__delay_queues[j].append(au.add_samples_gain(data[i][j], effect_data[i][j], self.gain[1]))
-
-        return au.add_samples_gain(data, effect_data, 0.7)
+        data_size = data.shape[0]
+        dry_data = (data * self.gain[DRY_GAIN]).astype(self.type)
+        append_data = (data * self.__decay).astype(self.type)
+        if(self.__delay.shape[0] < data_size):
+            self.__delay = np.append(self.__delay, data[:(data_size - self.__delay.shape[0])], axis=0)
+        wet_data = (self.__delay[:data_size] * self.gain[WET_GAIN]).astype(self.type)
+        self.__delay = np.append(self.__delay[data_size:], np.add(append_data, wet_data), axis=0)
+        return np.add(dry_data, wet_data)

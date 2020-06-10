@@ -1,11 +1,12 @@
 import numpy as np
+
 class EffectPipe:
     '''
         Abstract class for all effects to be derived from.
 
         TODO: Write more documentation.
     '''
-    def __init__(self, rate = 44100, ch = 2, dtype = np.int16, blocksize = 1024, dgain = 0.7, wgain = 0.3):
+    def __init__(self, rate = 44100, ch = 2, dtype = np.int16, dgain = 0.7, wgain = 0.3):
         '''
 
         Constructor.
@@ -25,7 +26,6 @@ class EffectPipe:
             raise TypeError(eString)
         self.__TYPE = np.dtype(dtype)
         self.__CHANNELS = ch
-        self.__BLOCKSIZE = blocksize
         self.__DGAIN = dgain
         self.__WGAIN = wgain
 
@@ -82,9 +82,4 @@ class EffectPipe:
     def gain(self):
         '''Returns a tuple containing both the dry and wet gain values. (Dry, Wet).'''
         return (self.__DGAIN, self.__WGAIN)
-
-    @property
-    def blocksize(self):
-        '''Returns the size of the blocksize.'''
-        return self.__BLOCKSIZE
     ##endregion

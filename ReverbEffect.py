@@ -4,8 +4,10 @@ from CombFilter import CombFilter
 from collections import deque
 import cmath as cm
 import numpy as np
-import AudioUtil as au
+from math import ceil
 
+DRY_GAIN = 0
+WET_GAIN = 1
 
 class ReverbEffect(EffectPipe):
     '''
@@ -13,7 +15,8 @@ class ReverbEffect(EffectPipe):
 
         TODO: Write more documentation.
     '''
-    def __init__(self, rate, ch, dtype, blocksize = 0, dgain = 0.7, wgain = 0.7):
+    def __init__(self, rate, ch, dtype, dgain = 0.7, wgain = 0.7,
+                delays=[43, 53, 61, 71], primes=True):
         '''
 
         Constructor
@@ -23,17 +26,33 @@ class ReverbEffect(EffectPipe):
             ch: Number of channels. Default: 2
             dtype: Numpy data type. Default: np.int16
                    [np.int16, np.int32, np.float32]
+            dgain: The ratio for "Dry" gain. Default: 0.7
+            wgain: The ratio for "Wet" gain. Default: 0.7
+            delays: List containing the number of delays to
+                    use for the early reflections. Default: [43, 53, 61, 71]
+                    Note: This array must have at least one value, but should
+                          optimally have 4. More than 4 might impact performance.
+            primes: Makes it so that number of samples in each
+                    delay to set to the next prime number greater
+                    than the normal amount of samples.
 
-        Note: Types are enforced in the base class EffectPipe
+
+        Note: Types are enforced for the default constructor arguments
+              in the base class EffectPipe.
 
         '''
-        super().__init__(rate, ch, dtype, blocksize, dgain, wgain)
+        super().__init__(rate, ch, dtype, dgain, wgain)
+        next_prime = lambda a: (ceil((a-1)/6)*6)+1
+        delay_times = delays
+        # delay_times = [43]
+        self.__ms = rate // 1000
+        self.__delays = []
+        for i in delay_times:
+            if(primes):
+                self.__delays.append(np.zeros(shape=(next_prime(i*self.__ms),ch), dtype=(self.type)))
+            else:
+                self.__delays.append(np.zeros(shape=(i*self.__ms,ch), dtype=(self.type)))
         self.__queue = deque()
-        self.__filters = [
-                            CombFilter(rate, ch, dtype, dgain=0.7, wgain=0.7, time=23), CombFilter(rate, ch, dtype, dgain=0.7, wgain=0.7, time=37),
-                            CombFilter(rate, ch, dtype, dgain=0.7, wgain=0.7, time=47), CombFilter(rate, ch, dtype, dgain=0.7, wgain=0.7, time=61),
-                        ]
-        #self.__last_sample = np.zeros(shape=(blocksize,ch), dtype=self.type)
 
     def push(self, data):
         '''
@@ -68,10 +87,13 @@ class ReverbEffect(EffectPipe):
             data: numpy array containing audio data.
 
         '''
-        for i in range(4):
-            self.__filters[i].push(data)
-
-        a = au.add_samples(self.__filters[0].get(), self.__filters[1].get())
-        b = au.add_samples(self.__filters[2].get(), self.__filters[3].get())
-        return au.add_samples_gain(au.add_samples_gain(a, b, self.gain[1]), data, 0.7, 0.9)
-        #d = au.add_samples_gain(data, c, 0.7)
+        data_size = data.shape[0]
+        add_data = (data * self.gain[WET_GAIN]).astype(self.type)
+        out_data = np.zeros(shape=data.shape, dtype=self.type)
+        for i in range(len(self.__delays)):
+            if(self.__delays[i].shape[0] < data_size):
+                self.__delays[i] = np.append(self.__delays[i], data[:(data_size - self.__delays[i].shape[0])], axis=0)
+            a = (self.__delays[i][:data_size] * 0.7).astype(self.type)
+            self.__delays[i] = np.append(self.__delays[i][data_size:], np.add(add_data, a), axis=0)
+            out_data = np.add(out_data, (a*self.gain[WET_GAIN]).astype(self.type))
+        return np.add(out_data, (data * self.gain[DRY_GAIN]).astype(self.type))

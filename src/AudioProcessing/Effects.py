@@ -15,7 +15,7 @@ WET_GAIN = 1
 
 # ===== Classes =====
 
-class EffectPipe:
+class EffectBase:
     '''
         Abstract class for all effects to be derived from.
 
@@ -99,11 +99,11 @@ class EffectPipe:
         return (self.__DGAIN, self.__WGAIN)
     ##endregion
 
-class DelayEffect(EffectPipe):
+class DelayEffect(EffectBase):
     '''
-        Delay Effect.
+    Delay Effect.
 
-        TODO: Write more documentation.
+    TODO: Write more documentation.
     '''
     def __init__(self, rate, ch, dtype, dgain = 0.7, wgain = 0.5, time=250):
         '''
@@ -120,7 +120,7 @@ class DelayEffect(EffectPipe):
             time: Delay in milliseconds. Default: 500
 
         Note: Types for the default constructor arguments are enforced
-              in the base class EffectPipe
+              in the base class EffectBase
 
         '''
         super().__init__(rate, ch, dtype, dgain, wgain)
@@ -159,6 +159,16 @@ class DelayEffect(EffectPipe):
         else:
             return None
 
+    def clear(self):
+        '''
+
+        Clears the current effect queue. Basically just calls "clear()"
+        on the deque containing all of the processed samples.
+
+
+        '''
+        self.__queue.clear()
+
     def __add_effect(self, data):
         '''
 
@@ -179,11 +189,11 @@ class DelayEffect(EffectPipe):
         self.__delay = np.append(self.__delay[data_size:], data, axis=0)
         return np.add(dry_data, wet_data)
 
-class CombFilter(EffectPipe):
+class CombFilter(EffectBase):
     '''
-        A Comb Filter.
+    A Comb Filter.
 
-        TODO: Write more documentation.
+    TODO: Write more documentation.
     '''
     def __init__(self, rate, ch, dtype, dgain = 0.7, wgain = 0.7, decay = 0.9, time=100):
         '''
@@ -232,6 +242,16 @@ class CombFilter(EffectPipe):
         else:
             return None
 
+    def clear(self):
+        '''
+
+        Clears the current effect queue. Basically just calls "clear()"
+        on the deque containing all of the processed samples.
+
+
+        '''
+        self.__queue.clear()
+
     def __add_effect(self, data):
         '''
 
@@ -251,16 +271,15 @@ class CombFilter(EffectPipe):
         self.__delay = np.append(self.__delay[data_size:], np.add(append_data, wet_data), axis=0)
         return np.add(dry_data, wet_data)
 
-class ReverbEffect(EffectPipe):
+class ReverbEffect(EffectBase):
     '''
-        Reverb Effect.
+    Reverb Effect.
 
-        TODO: Write more documentation.
+    TODO: Write more documentation.
     '''
     def __init__(self, rate, ch, dtype, dgain = 0.7, wgain = 0.7,
                 delays=[43, 53, 61, 71], primes=True):
         '''
-
         Constructor
 
         Parameters:
@@ -280,8 +299,7 @@ class ReverbEffect(EffectPipe):
 
 
         Note: Types are enforced for the default constructor arguments
-              in the base class EffectPipe.
-
+              in the base class EffectBase.
         '''
         super().__init__(rate, ch, dtype, dgain, wgain)
         # Turns a number 'a' into the next highest prime number.
@@ -321,6 +339,16 @@ class ReverbEffect(EffectPipe):
             return self.__queue.popleft()
         else:
             return None
+
+    def clear(self):
+        '''
+
+        Clears the current effect queue. Basically just calls "clear()"
+        on the deque containing all of the processed samples.
+
+
+        '''
+        self.__queue.clear()
 
     def __add_effect(self, data):
         '''

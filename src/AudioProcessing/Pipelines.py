@@ -1,11 +1,11 @@
 import numpy as np
 
 '''
-The "Pipeline" module contains the classes responsible for
-creating
+The "Pipeline" module contains the classes responsible for managing the "flow"
+of audio data.
 '''
 
-class AudioPipeline:
+class PipelineBase:
     '''
     Base class for all audio pipelines.
     '''
